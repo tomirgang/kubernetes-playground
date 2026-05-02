@@ -477,7 +477,7 @@ module "kube-hetzner" {
 
   # By default traefik is configured to redirect http traffic to https, you can set this to "false" to disable the redirection.
   # The default is true.
-  # traefik_redirect_to_https = false
+  traefik_redirect_to_https = false
 
   # Enable or disable Horizontal Pod Autoscaler for traefik.
   # The default is true.
