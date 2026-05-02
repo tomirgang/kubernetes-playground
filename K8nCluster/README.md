@@ -226,6 +226,75 @@ kubectl get pods -A
 # Cluster-Info
 kubectl cluster-info
 
-# Kubeconfig aus Tofi neu exportieren
+# Kubeconfig aus Tofu neu exportieren
 tofu output --raw kubeconfig > kubeconfig
+```
+
+## GitOps mit Flux
+
+[Flux](https://fluxcd.io/) überwacht dieses Git-Repository und synchronisiert Kubernetes-Manifeste automatisch ins Cluster. Änderungen werden per `git push` deployed – kein manuelles `kubectl apply` nötig.
+
+### Voraussetzungen
+
+- [Flux CLI](https://fluxcd.io/flux/installation/) (`flux`)
+- GitHub Personal Access Token mit `repo`-Rechten
+
+### Flux installieren
+
+```bash
+export GITHUB_TOKEN="dein-github-token"
+
+flux bootstrap github \
+  --owner=tomirgang \
+  --repository=kubernetes-playground \
+  --path=flux \
+  --branch=main \
+  --personal
+```
+
+Das erstellt:
+- Einen `flux-system`-Namespace mit den Flux-Controllern
+- Ein Verzeichnis `flux/` mit der Flux-Konfiguration
+
+### Anwendungen einbinden
+
+Anwendungen werden als `Kustomization`-Ressource definiert, z.B. für Mealie:
+
+```yaml
+# K8nCluster/flux/mealie.yaml
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: mealie
+  namespace: flux-system
+spec:
+  interval: 5m
+  path: ./local/mealie
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  targetNamespace: mealie
+```
+
+### Workflow
+
+1. YAML-Manifeste im Repo ändern (z.B. `local/mealie/deployment.yaml`)
+2. `git commit && git push`
+3. Flux erkennt die Änderung und applied sie automatisch
+
+### Flux-Status prüfen
+
+```bash
+# Übersicht aller Flux-Ressourcen
+flux get all
+
+# Sync-Status einer Kustomization
+flux get kustomizations
+
+# Manuelle Synchronisation erzwingen
+flux reconcile kustomization mealie
+
+# Flux-Logs anzeigen
+flux logs
 ```

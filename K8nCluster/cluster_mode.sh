@@ -190,9 +190,7 @@ restore_cluster_data() {
       for resource in configmaps secrets persistentvolumeclaims deployments statefulsets daemonsets services ingresses cronjobs; do
         local file="$ns_dir/${resource}.yaml"
         if [[ -f "$file" ]] && [[ -s "$file" ]]; then
-          local items
-          items=$(grep -c '^\s*- apiVersion:' "$file" 2>/dev/null || echo "0")
-          if [[ "$items" -gt 0 ]] || grep -q 'kind:' "$file" 2>/dev/null; then
+          if grep -q 'kind:' "$file" 2>/dev/null; then
             kubectl apply -f "$file" -n "$ns" 2>/dev/null || true
           fi
         fi
