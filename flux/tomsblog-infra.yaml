@@ -10,6 +10,10 @@ spec:
   sourceRef:
     kind: GitRepository
     name: tomsblog
+  decryption:
+    provider: sops
+    secretRef:
+      name: sops-age
   healthChecks:
     - apiVersion: postgresql.cnpg.io/v1
       kind: Cluster
