@@ -98,6 +98,7 @@ Nach erfolgreichem Apply wird automatisch eine `kubeconfig`-Datei erzeugt.
 
 ```bash
 export KUBECONFIG=$(pwd)/kubeconfig
+tofu output --raw kubeconfig > kubeconfig
 kubectl get nodes
 ```
 
@@ -131,10 +132,86 @@ kubectl get pods -A
 kubectl get pvc
 ```
 
+## Cluster updaten
+
+Da dieses Cluster nur einen Control-Plane-Node hat (kein HA), müssen automatische Upgrades deaktiviert sein:
+
+```hcl
+automatically_upgrade_k3s = false
+automatically_upgrade_os  = false
+```
+
+Updates werden stattdessen manuell über das mitgelieferte Skript `cluster_update.sh` durchgeführt.
+
+### k3s (Kubernetes) updaten
+
+```bash
+./cluster_update.sh k3s
+```
+
+Das Skript:
+1. Fragt nach dem gewünschten k3s-Channel (z.B. `v1.33`, `stable`)
+2. Aktualisiert k3s auf dem Control-Plane-Node per SSH
+3. Drains und aktualisiert Worker-Nodes nacheinander
+4. Wartet auf Node-Readiness nach jedem Update
+
+### MicroOS (Betriebssystem) updaten
+
+```bash
+./cluster_update.sh os
+```
+
+Das Skript:
+1. Baut einen neuen MicroOS-Snapshot mit Packer
+2. Drains Worker-Nodes und reprovisiert sie einzeln via `tofu taint` + `tofu apply`
+3. Reprovisiert den Control-Plane-Node (kurze Downtime unvermeidbar)
+
+### Beides updaten
+
+```bash
+./cluster_update.sh all
+```
+
+> **Hinweis:** Bei einem Single-Control-Plane-Cluster ist kurze Downtime während des Updates unvermeidbar. Updates am besten zu einer ruhigen Zeit durchführen.
+
+## Kosten sparen
+
+Hetzner berechnet auch gestoppte Server, da Ressourcen (CPU, RAM, Disk, IP) reserviert bleiben. Das Skript `cluster_mode.sh` ermöglicht es, zwischen drei Betriebsmodi umzuschalten:
+
+| Modus | Beschreibung | Monatliche Kosten |
+|-------|-------------|-------------------|
+| `normal` | 1 CP + 2 Worker + LB | ~21,55 € |
+| `reduziert` | 1 CP + 0 Worker + LB | ~10,35 € |
+| `pausiert` | Cluster zerstört, Daten lokal gesichert | ~0 € |
+
+### Modus wechseln
+
+```bash
+./cluster_mode.sh normal      # Vollbetrieb
+./cluster_mode.sh reduziert   # Nur Control Plane
+./cluster_mode.sh pausiert    # Cluster zerstören + Backup
+./cluster_mode.sh status      # Aktuellen Modus anzeigen
+```
+
+### Was wird bei `pausiert` gesichert?
+
+Beim Wechsel auf `pausiert` sichert das Skript automatisch:
+
+- **Tofu State** (für konsistente Infrastruktur)
+- **Kubeconfig**
+- **Kubernetes-Ressourcen** (Deployments, Services, ConfigMaps, Secrets, PVCs, Ingresses, etc.)
+- **Hetzner Volume Snapshots** (Daten der Persistent Volumes)
+
+Alle Backups werden unter `.cluster-backup/` gespeichert.
+
+Beim Wechsel zurück auf `normal` oder `reduziert` wird das Cluster neu aufgebaut und die gesicherten Ressourcen automatisch wiederhergestellt.
+
+> **Hinweis:** Volume Snapshots verbleiben in Hetzner Cloud und verursachen geringe Kosten (~0,01 €/GB/Monat). Diese können nach erfolgreicher Wiederherstellung manuell gelöscht werden.
+
 ## Cluster löschen
 
 ```bash
-terraform destroy
+tofu destroy
 ```
 
 ## Nützliche Befehle
@@ -149,6 +226,6 @@ kubectl get pods -A
 # Cluster-Info
 kubectl cluster-info
 
-# Kubeconfig aus Terraform neu exportieren
-terraform output --raw kubeconfig > kubeconfig
+# Kubeconfig aus Tofi neu exportieren
+tofu output --raw kubeconfig > kubeconfig
 ```

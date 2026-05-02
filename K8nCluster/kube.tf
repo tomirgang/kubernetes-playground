@@ -2,6 +2,13 @@ locals {
   # You have the choice of setting your Hetzner API token here or define the TF_VAR_hcloud_token env
   # within your shell, such as: export TF_VAR_hcloud_token=xxxxxxxxxxx. Or you can use .tfvars-files.
   # If you choose to define it in the shell, this can be left as is.
+
+  # Your Hetzner token can be found in your Project > Security > API Token (Read & Write is required).
+  hcloud_token = ""
+
+  # Credentials for the Hetzner Robot webservice
+  robot_user     = ""
+  robot_password = ""
 }
 
 module "kube-hetzner" {
@@ -51,7 +58,7 @@ module "kube-hetzner" {
   # If you want to use an ssh key that is already registered within hetzner cloud, you can pass its id.
   # If no id is passed, a new ssh key will be registered within hetzner cloud.
   # It is important that exactly this key is passed via `ssh_public_key` & `ssh_private_key` variables.
-  # hcloud_ssh_key_id = ""
+  hcloud_ssh_key_id = "111694991"
 
   # These can be customized, or left with the default values
   # * For Hetzner locations see https://docs.hetzner.com/general/others/data-centers-and-connection/
@@ -122,7 +129,7 @@ module "kube-hetzner" {
   control_plane_nodepools = [
     {
       name        = "control-plane-nbg1",
-      server_type = "cx22",
+      server_type = "cx23",
       location    = "nbg1",
       labels      = [],
       taints      = [],
@@ -133,13 +140,14 @@ module "kube-hetzner" {
   agent_nodepools = [
     {
       name        = "worker-nbg1",
-      server_type = "cx22",
+      server_type = "cx23",
       location    = "nbg1",
       labels      = [],
       taints      = [],
       count       = 2
     }
   ]
+  
   # Add additional configuration options for control planes here.
   # E.g to enable monitoring for etcd, proxy etc:
   # control_planes_custom_config = {
@@ -160,7 +168,7 @@ module "kube-hetzner" {
   # Source: https://docs.hetzner.com/cloud/networks/faq/#is-traffic-inside-hetzner-cloud-networks-encrypted
   # It works with all CNIs that we support.
   # Just note, that if Cilium with cilium_values, the responsibility of enabling of disabling Wireguard falls on you.
-  # enable_wireguard = true
+  enable_wireguard = true
 
   # Override the flannel backend directly (takes precedence over enable_wireguard).
   # Valid values: vxlan (default), host-gw, wireguard-native
@@ -218,7 +226,7 @@ module "kube-hetzner" {
   ### The following values are entirely optional (and can be removed from this if unused)
 
   # You can refine a base domain name to be use in this form of nodename.base_domain for setting the reverse dns inside Hetzner
-  # base_domain = "mycluster.example.com"
+  base_domain = "cluster.tomirgang.de"
 
   # Cluster Autoscaler
   # Providing at least one map for the array enables the cluster autoscaler feature, default is disabled.
@@ -545,7 +553,7 @@ module "kube-hetzner" {
   # For production use, always use an HA setup with at least 3 control-plane nodes and 2 agents, and keep this on for maximum security.
 
   # The default is "true" (in HA setup i.e. at least 3 control plane nodes & 2 agents, just keep it enabled since it works flawlessly).
-  # automatically_upgrade_k3s = false
+  automatically_upgrade_k3s = false
 
   # By default nodes are drained before k3s upgrade, which will delete and transfer all pods to other nodes.
   # Set this to false to cordon nodes instead, which just prevents scheduling new pods on the node during upgrade
@@ -562,7 +570,7 @@ module "kube-hetzner" {
 
   # The default is "true" (in HA setup it works wonderfully well, with automatic roll-back to the previous snapshot in case of an issue).
   # IMPORTANT! For non-HA clusters i.e. when the number of control-plane nodes is < 3, you have to turn it off.
-  # automatically_upgrade_os = false
+  automatically_upgrade_os = false
 
   # If you need more control over kured and the reboot behaviour, you can pass additional options to kured.
   # For example limiting reboots to certain timeframes. For all options see: https://kured.dev/docs/configuration/
@@ -606,7 +614,7 @@ module "kube-hetzner" {
   # }
 
   # The cluster name, by default "k3s"
-  # cluster_name = ""
+  cluster_name = "tomsblog"
 
   # Whether to use the cluster name in the node name, in the form of {cluster_name}-{nodepool_name}, the default is "true".
   # use_cluster_name_in_node_name = false

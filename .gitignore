@@ -1,0 +1,41 @@
+# Terraform / OpenTofu
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfplan
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+*.tfvars
+*.tfvars.json
+
+# Packer
+packer_cache/
+
+# Kubeconfig (contains credentials)
+kubeconfig
+*kubeconfig*
+
+# Cluster backup data
+.cluster-backup/
+
+# SSH keys
+*.pem
+id_*
+*.key
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# Environment files
+.env
+.env.*
