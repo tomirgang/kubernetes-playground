@@ -1,0 +1,3 @@
+[submodule "terraform-hcloud-kube-hetzner"]
+	path = terraform-hcloud-kube-hetzner
+	url = git@github.com:tomirgang/terraform-hcloud-kube-hetzner.git
