@@ -4,6 +4,26 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
+KUBECONFIG_LOCAL="${SCRIPT_DIR}/kubeconfig"
+KUBECONFIG_GLOBAL="${HOME}/.kube/config"
+
+sync_kubeconfig() {
+  echo "  Synchronisiere kubeconfig nach ~/.kube/config..."
+  if [[ ! -f "$KUBECONFIG_LOCAL" ]]; then
+    echo "  WARNUNG: Lokale kubeconfig nicht vorhanden."
+    return 1
+  fi
+  mkdir -p "$(dirname "$KUBECONFIG_GLOBAL")"
+  if [[ -f "$KUBECONFIG_GLOBAL" ]]; then
+    KUBECONFIG="${KUBECONFIG_GLOBAL}:${KUBECONFIG_LOCAL}" kubectl config view --flatten > "${KUBECONFIG_GLOBAL}.merged"
+    mv "${KUBECONFIG_GLOBAL}.merged" "$KUBECONFIG_GLOBAL"
+  else
+    cp "$KUBECONFIG_LOCAL" "$KUBECONFIG_GLOBAL"
+  fi
+  chmod 600 "$KUBECONFIG_GLOBAL"
+  echo "  ~/.kube/config aktualisiert."
+}
+
 usage() {
   cat <<EOF
 Usage: $(basename "$0") <command>
@@ -163,6 +183,7 @@ update_os() {
     echo "  Updating kubeconfig..."
     tofu output --raw kubeconfig > kubeconfig
     export KUBECONFIG="$(pwd)/kubeconfig"
+    sync_kubeconfig
     echo "  Waiting for control plane to become ready..."
     sleep 60
     kubectl wait --for=condition=Ready nodes -l node-role.kubernetes.io/control-plane --timeout=300s

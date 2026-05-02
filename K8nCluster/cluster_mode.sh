@@ -6,6 +6,25 @@ cd "$SCRIPT_DIR"
 
 BACKUP_DIR="${SCRIPT_DIR}/.cluster-backup"
 MODE_FILE="${BACKUP_DIR}/current-mode"
+KUBECONFIG_LOCAL="${SCRIPT_DIR}/kubeconfig"
+KUBECONFIG_GLOBAL="${HOME}/.kube/config"
+
+sync_kubeconfig() {
+  echo "  Synchronisiere kubeconfig nach ~/.kube/config..."
+  if [[ ! -f "$KUBECONFIG_LOCAL" ]]; then
+    echo "  WARNUNG: Lokale kubeconfig nicht vorhanden."
+    return 1
+  fi
+  mkdir -p "$(dirname "$KUBECONFIG_GLOBAL")"
+  if [[ -f "$KUBECONFIG_GLOBAL" ]]; then
+    KUBECONFIG="${KUBECONFIG_GLOBAL}:${KUBECONFIG_LOCAL}" kubectl config view --flatten > "${KUBECONFIG_GLOBAL}.merged"
+    mv "${KUBECONFIG_GLOBAL}.merged" "$KUBECONFIG_GLOBAL"
+  else
+    cp "$KUBECONFIG_LOCAL" "$KUBECONFIG_GLOBAL"
+  fi
+  chmod 600 "$KUBECONFIG_GLOBAL"
+  echo "  ~/.kube/config aktualisiert."
+}
 
 usage() {
   cat <<EOF
@@ -72,6 +91,7 @@ update_kubeconfig() {
   fi
   export KUBECONFIG="${SCRIPT_DIR}/kubeconfig"
   echo "  kubeconfig aktualisiert: ${SCRIPT_DIR}/kubeconfig"
+  sync_kubeconfig
 }
 
 # --- Backup ---
@@ -304,6 +324,18 @@ to_pausiert() {
 
   echo "Zerstöre Cluster..."
   tofu destroy
+
+  # Context aus globaler kubeconfig entfernen
+  if [[ -f "$KUBECONFIG_GLOBAL" ]]; then
+    echo "  Entferne Cluster-Context aus ~/.kube/config..."
+    local ctx
+    ctx=$(kubectl --kubeconfig="$KUBECONFIG_LOCAL" config current-context 2>/dev/null || true)
+    if [[ -n "$ctx" ]]; then
+      kubectl --kubeconfig="$KUBECONFIG_GLOBAL" config delete-context "$ctx" 2>/dev/null || true
+      kubectl --kubeconfig="$KUBECONFIG_GLOBAL" config delete-cluster "$ctx" 2>/dev/null || true
+      kubectl --kubeconfig="$KUBECONFIG_GLOBAL" config delete-user "$ctx" 2>/dev/null || true
+    fi
+  fi
 
   set_mode "pausiert"
   echo ""

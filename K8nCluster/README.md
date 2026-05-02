@@ -2,6 +2,12 @@
 
 Dieses Setup erstellt ein kleines Kubernetes-Cluster auf Hetzner Cloud mithilfe von [terraform-hcloud-kube-hetzner](https://github.com/kube-hetzner/terraform-hcloud-kube-hetzner) (k3s-basiert).
 
+## Abgrenzung
+
+Dieses Repository verwaltet die **Plattform-Provisionierung** (Cluster, Nodes, Netzwerk, Basis-Operatoren).
+Applikationsspezifische Kubernetes-Ressourcen (DB-Instanzen, PVCs, Service-Deployments) liegen im
+jeweiligen Anwendungs-Repository (z.B. `tomsblog/infra/k8s/`).
+
 ## Cluster-Übersicht
 
 | Komponente       | Typ / Größe | Anzahl | Kosten (ca.)  |
