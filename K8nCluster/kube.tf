@@ -129,7 +129,7 @@ module "kube-hetzner" {
   control_plane_nodepools = [
     {
       name        = "control-plane-nbg1",
-      server_type = "cx23",
+      server_type = "cx33",
       location    = "nbg1",
       labels      = [],
       taints      = [],
@@ -851,7 +851,8 @@ module "kube-hetzner" {
   # block_icmp_ping_in = true
 
   # You can enable cert-manager (installed by Helm behind the scenes) with the following flag, the default is "true".
-  # enable_cert_manager = false
+  # Disabled: cert-manager is managed by Flux (see flux/cert-manager-release.yaml)
+  enable_cert_manager = false
 
   # IP Addresses to use for the DNS Servers, the defaults are the ones provided by Hetzner https://docs.hetzner.com/dns-console/dns/general/recursive-name-servers/.
   # The number of different DNS servers is limited to 3 by Kubernetes itself.

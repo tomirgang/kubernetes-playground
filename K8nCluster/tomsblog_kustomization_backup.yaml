@@ -35,4 +35,3 @@
 - "hcloud-csi.yaml"
 - "traefik_ingress.yaml"
 - "flannel-rbac.yaml"
-- "cert_manager.yaml"
