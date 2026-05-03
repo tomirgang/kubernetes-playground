@@ -8,5 +8,3 @@ resources:
   - reflector-release.yaml
   - tomsblog-source.yaml
   - tomsblog-infra.yaml
-  - blog-content-image.yaml
-  - blog-content-image-automation.yaml
