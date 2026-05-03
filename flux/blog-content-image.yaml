@@ -1,0 +1,22 @@
+apiVersion: image.toolkit.fluxcd.io/v1beta2
+kind: ImageRepository
+metadata:
+  name: blog-content
+  namespace: flux-system
+spec:
+  interval: 5m
+  image: ghcr.io/tomirgang/tomsblog/blog-content
+---
+apiVersion: image.toolkit.fluxcd.io/v1beta2
+kind: ImagePolicy
+metadata:
+  name: blog-content
+  namespace: flux-system
+spec:
+  imageRepositoryRef:
+    name: blog-content
+  filterTags:
+    pattern: '^sha-[a-f0-9]{7}$'
+  policy:
+    alphabetical:
+      order: asc
