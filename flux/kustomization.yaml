@@ -7,4 +7,3 @@ resources:
   - reflector-repo.yaml
   - reflector-release.yaml
   - tomsblog-source.yaml
-  - tomsblog-infra.yaml
