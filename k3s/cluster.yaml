@@ -1,0 +1,43 @@
+---
+cluster_name: tomsblog
+kubeconfig_path: "./kubeconfig"
+k3s_version: v1.33.1+k3s1
+
+networking:
+  ssh:
+    port: 22
+    use_agent: false
+    public_key_path: "~/.ssh/id_ed25519.pub"
+    private_key_path: "~/.ssh/id_ed25519"
+  allowed_networks:
+    ssh:
+      - 0.0.0.0/0
+    api:
+      - 0.0.0.0/0
+  public_network:
+    ipv4: true
+    ipv6: true
+  private_network:
+    enabled: true
+    subnet: 10.0.0.0/16
+    existing_network_name: ""
+  cni:
+    enabled: true
+    encryption: false
+    mode: flannel
+
+schedule_workloads_on_masters: false
+
+masters_pool:
+  instance_type: cpx22
+  instance_count: 1
+  location: nbg1
+
+worker_node_pools:
+- name: workers
+  instance_type: cpx22
+  instance_count: 2
+  location: nbg1
+
+protect_against_deletion: true
+create_load_balancer_for_the_kubernetes_api: false
